@@ -1,0 +1,12 @@
+[package]
+
+name = "parallel_macros"
+version = "0.0.0"
+authors = ["Jorge Aparicio <japaricious@gmail.com>"]
+
+[lib]
+name = "parallel_macros"
+plugin = true
+
+[dev-dependencies.parallel]
+path = ".."
