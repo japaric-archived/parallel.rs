@@ -5,11 +5,11 @@ extern crate rustc;
 extern crate syntax;
 
 use rustc::plugin::registry::Registry;
-use syntax::ast::{CompilerGenerated, TTTok, TokenTree, UnsafeBlock};
+use syntax::ast::{CompilerGenerated, TtToken, TokenTree, UnsafeBlock};
 use syntax::codemap::Span;
 use syntax::ext::base::{ExtCtxt, MacExpr, MacResult, NormalTT};
 use syntax::ext::build::AstBuilder;
-use syntax::parse::token::{mod, COMMA};
+use syntax::parse::token::{mod, Comma};
 
 /// Executes several closures in parallel
 ///
@@ -141,7 +141,7 @@ fn expand_execute<'cx>(
 
     let mut stmts = vec![];
     let tasks = tts.split(|tt| match *tt {
-        TTTok(_, COMMA) => true,
+        TtToken(_, Comma) => true,
         _ => false,
     }).filter(|tts| {
         !tts.is_empty()
