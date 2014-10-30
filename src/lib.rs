@@ -56,14 +56,14 @@ impl<T> Task<T> where T: Send {
 
     /// Waits until the task finishes and yields the return value of it's `job`
     ///
-    /// # Failure
+    /// # Panics
     ///
-    /// Fails if the underlying task fails
+    /// Panics if the underlying task panics
     pub fn join(self) -> T {
         if let Ok(value) = self.0.unwrap() {
             value
         } else {
-            fail!()
+            panic!()
         }
     }
 }

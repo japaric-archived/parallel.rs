@@ -10,9 +10,9 @@ use std::{cmp, iter, mem, raw, task};
 /// - The mutable chunk of data, and
 /// - The offset of this chunk from the start of `data`
 ///
-/// # Failure
+/// # Panics
 ///
-/// Fails if any of the underlying tasks fails
+/// Panics if any of the underlying tasks panics
 ///
 /// # Example
 ///
@@ -60,7 +60,7 @@ pub fn divide<'a, T>(
 
     for future in futures.into_iter() {
         if future.unwrap().is_err() {
-            fail!();
+            panic!();
         }
     }
 }
