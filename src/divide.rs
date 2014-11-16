@@ -19,6 +19,7 @@ use std::{cmp, iter, mem, raw, task};
 /// Parallel map
 ///
 /// ```
+/// use std::num::FloatMath;
 /// use std::rand::{Rng, XorShiftRng, mod};
 ///
 /// let ref mut rng: XorShiftRng = rand::task_rng().gen();
