@@ -56,7 +56,7 @@ use syntax::parse::token::{mod, Comma};
 /// [blog](http://smallcultfollowing.com/babysteps/blog/2013/06/11/data-parallelism-in-rust/).
 ///
 /// ```
-/// #![feature(overloaded_calls, phase)]
+/// #![feature(phase, unboxed_closures)]
 ///
 /// extern crate parallel;
 /// #[phase(plugin)]
