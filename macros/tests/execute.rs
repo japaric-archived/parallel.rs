@@ -1,4 +1,4 @@
-#![feature(overloaded_calls, phase)]
+#![feature(phase, unboxed_closures)]
 
 extern crate parallel;
 #[phase(plugin)]
