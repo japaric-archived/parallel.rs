@@ -32,18 +32,17 @@ use std::{cmp, iter, mem, raw, task};
 /// });
 /// # assert_eq!(v, w);
 /// ```
-// TODO (rust-lang/rfcs#387) Use unboxed closures
-pub fn divide<'a, T>(
+pub fn divide<T, F: Fn(&mut [T], uint) + Sync>(
     data: &mut [T],
     granularity: uint,
-    operation: |&mut [T], uint|:'a + Sync,
+    operation: F,
 ) where
     T: Send,
 {
     assert!(granularity > 0);
 
     let raw::Slice { data, len } = unsafe { mem::transmute::<_, raw::Slice<T>>(data) };
-    let closure = unsafe { mem::transmute::<_, raw::Closure>(operation) };
+    let op = &operation as *const _ as *const ();
 
     let futures = iter::range_step(0, len, granularity).map(|offset| {
         task::try_future(proc() {
@@ -53,9 +52,9 @@ pub fn divide<'a, T>(
                 len: cmp::min(granularity, len - offset)
             };
             let data = unsafe { mem::transmute::<_, &mut [T]>(slice) };
-            let operation = unsafe { mem::transmute::<_, |&mut [T], uint|:'a + Sync>(closure) };
+            let operation = unsafe { mem::transmute::<_, &F>(op) };
 
-            operation(data, offset);
+            (*operation)(data, offset);
         })
     }).collect::<Vec<_>>();
 
