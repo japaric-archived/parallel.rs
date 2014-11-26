@@ -60,7 +60,7 @@ impl<T> Task<T> where T: Send {
     ///
     /// Panics if the underlying task panics
     pub fn join(self) -> T {
-        if let Ok(value) = self.0.unwrap() {
+        if let Ok(value) = self.0.into_inner() {
             value
         } else {
             panic!()

@@ -59,7 +59,7 @@ pub fn divide<T, F: Fn(&mut [T], uint) + Sync>(
     }).collect::<Vec<_>>();
 
     for future in futures.into_iter() {
-        if future.unwrap().is_err() {
+        if future.into_inner().is_err() {
             panic!();
         }
     }
