@@ -24,7 +24,7 @@ use std::{cmp, iter, mem, raw, task};
 ///
 /// let ref mut rng: XorShiftRng = rand::task_rng().gen();
 /// let mut v = Vec::from_fn(1_000, |_| rng.gen::<f32>());
-/// # let w = v.iter().map(|x| x.sin()).collect();
+/// # let w = v.iter().map(|x| x.sin()).collect::<Vec<_>>();
 /// parallel::divide(v.as_mut_slice(), 100, |data, _| {
 ///     for x in data.iter_mut() {
 ///         *x = x.sin();
