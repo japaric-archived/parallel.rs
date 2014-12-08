@@ -16,7 +16,7 @@
 //! ```
 
 #![deny(warnings)]
-#![feature(if_let, phase, slicing_syntax, tuple_indexing, unboxed_closures)]
+#![feature(phase, slicing_syntax, unboxed_closures)]
 
 #[cfg(test)]
 extern crate quickcheck;
