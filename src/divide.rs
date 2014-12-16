@@ -45,7 +45,7 @@ pub fn divide<T, F: Fn(&mut [T], uint) + Sync>(
     let op = &operation as *const _ as *const ();
 
     let futures = iter::range_step(0, len, granularity).map(|offset| {
-        task::try_future(proc() {
+        task::try_future(move || {
             // NB Is safe to send the slice/closure because the task won't outlive this function
             let slice = raw::Slice {
                 data: unsafe { data.offset(offset as int) },

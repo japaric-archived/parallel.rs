@@ -26,11 +26,21 @@ extern crate quickcheck_macros;
 
 use std::any::Any;
 use std::sync::Future;
-use std::{mem, raw, task};
+use std::{mem, task};
 
 pub use divide::divide;
 
 mod divide;
+
+trait FnBox<R> {
+    fn call_box(self: Box<Self>) -> R;
+}
+
+impl<R, F> FnBox<R> for F where F : FnOnce() -> R {
+    fn call_box(self: Box<F>) -> R {
+        (*self)()
+    }
+}
 
 /// An unsafe task that may outlive its captured references
 ///
@@ -45,13 +55,9 @@ impl<T> Task<T> where T: Send {
     /// `job` don't outlive the task.
     pub unsafe fn fork<J>(job: J) -> Task<T> where J: FnOnce() -> T {
         // XXX Is there any way to avoid passing through a trait object?
-        let job = box job as Box<FnOnce<(), T>>;
-        let to = mem::transmute::<_, raw::TraitObject>(job);
+        let job = mem::transmute::<_, Box<FnBox<T> + Send>>(box job as Box<FnBox<T>>);
 
-        Task(task::try_future(proc() {
-            let job = mem::transmute::<_, Box<FnOnce<(), T> + Sync>>(to);
-            job.call_once(())
-        }))
+        Task(task::try_future(move || job.call_box()))
     }
 
     /// Waits until the task finishes and yields the return value of it's `job`
