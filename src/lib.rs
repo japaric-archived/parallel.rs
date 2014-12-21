@@ -24,9 +24,8 @@ extern crate quickcheck;
 #[phase(plugin)]
 extern crate quickcheck_macros;
 
-use std::any::Any;
-use std::sync::Future;
-use std::{mem, task};
+use std::mem;
+use std::thread::{JoinGuard, Thread};
 
 pub use divide::divide;
 
@@ -42,34 +41,15 @@ impl<R, F> FnBox<R> for F where F : FnOnce() -> R {
     }
 }
 
-/// An unsafe task that may outlive its captured references
+/// Spawns an unsafe thread that may outlive its captured references.
 ///
-/// **Note** You normally don't want to use this directly because it's unsafe. Instead use the
+/// The caller must ensure to call `join()` before the references become invalid.
+///
+/// **Note** You normally don't want to use this directly because it's unsafe. Instead use the safe
 /// [`execute!`](../parallel_macros/macro.execute!.html) macro.
-pub struct Task<T> where T: Send, (Future<Result<T, Box<Any + Send>>>);
+pub unsafe fn fork<T, F>(f: F) -> JoinGuard<T> where T: Send, F: FnOnce() -> T {
+    // XXX Is there any way to avoid passing through a trait object?
+    let f = mem::transmute::<_, Box<FnBox<T> + Send>>(box f as Box<FnBox<T>>);
 
-impl<T> Task<T> where T: Send {
-    /// Spawns a new task that will execute `job`
-    ///
-    /// This is unsafe because the caller must ensure that the lifetimes of the objects captured by
-    /// `job` don't outlive the task.
-    pub unsafe fn fork<J>(job: J) -> Task<T> where J: FnOnce() -> T {
-        // XXX Is there any way to avoid passing through a trait object?
-        let job = mem::transmute::<_, Box<FnBox<T> + Send>>(box job as Box<FnBox<T>>);
-
-        Task(task::try_future(move || job.call_box()))
-    }
-
-    /// Waits until the task finishes and yields the return value of it's `job`
-    ///
-    /// # Panics
-    ///
-    /// Panics if the underlying task panics
-    pub fn join(self) -> T {
-        if let Ok(value) = self.0.into_inner() {
-            value
-        } else {
-            panic!()
-        }
-    }
+    Thread::spawn(move || f.call_box())
 }
