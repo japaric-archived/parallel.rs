@@ -15,9 +15,10 @@ use syntax::parse::token::{mod, Comma};
 ///
 /// - This macro is an expression, and will return a tuple containing the values returned by the
 /// closures.
-/// - One task per closure (i.e. there is no "load balancing").
-/// - This macro will block until all the spawned tasks have finished. For this reason the closures
-/// don't need to fulfill the `Send` trait (i.e. the closures may capture slices and references).
+/// - One thread per closure (i.e. there is no "load balancing").
+/// - This macro will block until all the spawned threads have finished. For this reason the
+///   closures don't need to fulfill the `Send` trait (i.e. the closures may capture slices and
+///   references).
 ///
 /// # Expansion
 ///
@@ -25,30 +26,30 @@ use syntax::parse::token::{mod, Comma};
 ///
 /// ``` ignore
 /// let (a, b, c) = execute!{
-///     |:| job_1(),
-///     |:| job_2(),
-///     |:| job_3(),
+///     || job_0(),
+///     || job_1(),
+///     || job_2(),
 /// };
 /// ```
 ///
-/// This macro uses the "unsafe" [`Task`](../parallel/struct.Task.html) defined in the
+/// This macro uses the unsafe [`fork`](../parallel/fn.fork.html) function defined in the
 /// [`parallel`](../parallel/index.html) crate, and its expansion looks (roughly) like this:
 ///
 /// ``` ignore
 /// let (a, b, c) = {
-///     let __task_0 = |:| job_1();
-///     let __task_1 = unsafe { Task::fork(|:| job_2()) };  // spawns a task
-///     let __task_2 = unsafe { Task::fork(|:| job_3()) };  // spawns another task
+///     let __thread_0 = || job_0();
+///     let __thread_1 = unsafe { ::parallel::fork(|| job_1()) };  // spawns a thread
+///     let __thread_2 = unsafe { ::parallel::fork(|| job_2()) };  // spawns another thread
 ///
-///     // the current task takes care of the first closure
-///     (__task_0(), __task_1.join(), __task_2.join())
-///     // ^~ then blocks until the other two tasks finish
+///     // the current thread takes care of the first closure
+///     (__thread_0(), __thread_1.join().ok().unwrap(), __thread_2.join().ok().unwrap())
+///     // ^~ then blocks until the other two threads finish
 /// };
 /// ```
 ///
 /// # Failure
 ///
-/// This macro will fail if any of the spawned tasks fails.
+/// This macro will fail if any of the spawned threads fails.
 ///
 /// # Example
 ///
@@ -78,9 +79,9 @@ use syntax::parse::token::{mod, Comma};
 ///         }
 ///
 ///         let (left_sum, right_sum) = execute!{
-///             // NB Each closure captures a reference which doesn't fulfills `Send`
-///             |:| sum(&self.left),
-///             |:| sum(&self.right),
+///             // NB Each closure captures a reference and therefore doesn't fulfill `Send`
+///             || sum(&self.left),
+///             || sum(&self.right),
 ///         };
 ///
 ///         left_sum + self.value + right_sum
@@ -129,30 +130,29 @@ fn expand_execute<'cx>(
     sp: Span,
     tts: &[TokenTree],
 ) -> Box<MacResult + 'cx> {
-    let parallel_task_fork_fn_path = {
+    let parallel_fork_fn_path = {
         let segments = vec![
-            token::str_to_ident("parallel"),
-            token::str_to_ident("Task"),
-            token::str_to_ident("fork"),
+            cx.ident_of("parallel"),
+            cx.ident_of("fork"),
         ];
 
         cx.expr_path(cx.path_global(sp, segments))
     };
 
     let mut stmts = vec![];
-    let tasks = tts.split(|tt| match *tt {
+    let threads = tts.split(|tt| match *tt {
         TtToken(_, Comma) => true,
         _ => false,
     }).filter(|tts| {
         !tts.is_empty()
     }).enumerate().map(|(i, tts)|  {
         let closure = cx.new_parser_from_tts(tts).parse_expr();
-        let ident = token::str_to_ident(format!("__task_{}", i)[]);
+        let ident = cx.ident_of(&*format!("__thread_{}", i));
 
         let expr = if i == 0 {
             closure
         } else {
-            let fn_name = parallel_task_fork_fn_path.clone();
+            let fn_name = parallel_fork_fn_path.clone();
             let args = vec![closure];
 
             // XXX There has to be a simpler way to wrap an expression in `unsafe`
@@ -169,18 +169,23 @@ fn expand_execute<'cx>(
     }).collect::<Vec<_>>();
 
     let mut is_first = true;
-    let expr = cx.expr_tuple(sp, tasks.into_iter().map(|task| {
-        let args = vec![];
-        let task = cx.expr_ident(sp, task);
+    let expr = cx.expr_tuple(sp, threads.into_iter().map(|thread| {
+        let thread = cx.expr_ident(sp, thread);
 
         if is_first {
+            let args = vec![];
             is_first = false;
 
-            cx.expr_call(sp, task, args)
+            cx.expr_call(sp, thread, args)
         } else {
-            let method = token::str_to_ident("join");
+            let args = vec![];
+            let join_method = cx.ident_of("join");
+            let ok_method = cx.ident_of("ok");
+            let unwrap_method = cx.ident_of("unwrap");
 
-            cx.expr_method_call(sp, task, method, args)
+            let join_call = cx.expr_method_call(sp, thread, join_method, args.clone());
+            let ok_call = cx.expr_method_call(sp, join_call, ok_method, args.clone());
+            cx.expr_method_call(sp, ok_call, unwrap_method, args)
         }
     }).collect());
 

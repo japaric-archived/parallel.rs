@@ -1,8 +1,9 @@
-use std::{cmp, iter, mem, raw, task};
+use std::thread::Thread;
+use std::{cmp, iter, mem, raw};
 
 /// Parallelizes an `operation` over a mutable slice
 ///
-/// The `data` will be divided in chunks of `granularity` size. A new task will be spawned to
+/// The `data` will be divided in chunks of `granularity` size. A new thread will be spawned to
 /// "operate" over each chunk.
 ///
 /// `operation` will receive two arguments:
@@ -12,7 +13,7 @@ use std::{cmp, iter, mem, raw, task};
 ///
 /// # Panics
 ///
-/// Panics if any of the underlying tasks panics
+/// Panics if any of the underlying threads panics
 ///
 /// # Example
 ///
@@ -32,21 +33,18 @@ use std::{cmp, iter, mem, raw, task};
 /// });
 /// # assert_eq!(v, w);
 /// ```
-pub fn divide<T, F: Fn(&mut [T], uint) + Sync>(
-    data: &mut [T],
-    granularity: uint,
-    operation: F,
-) where
+pub fn divide<T, F>(data: &mut [T], granularity: uint, operation: F) where
     T: Send,
+    F: Fn(&mut [T], uint) + Sync,
 {
     assert!(granularity > 0);
 
     let raw::Slice { data, len } = unsafe { mem::transmute::<_, raw::Slice<T>>(data) };
     let op = &operation as *const _ as *const ();
 
-    let futures = iter::range_step(0, len, granularity).map(|offset| {
-        task::try_future(move || {
-            // NB Is safe to send the slice/closure because the task won't outlive this function
+    let threads = iter::range_step(0, len, granularity).map(|offset| {
+        Thread::spawn(move || {
+            // NB Is safe to send the slice/closure because the thread won't outlive this function
             let slice = raw::Slice {
                 data: unsafe { data.offset(offset as int) },
                 len: cmp::min(granularity, len - offset)
@@ -58,8 +56,8 @@ pub fn divide<T, F: Fn(&mut [T], uint) + Sync>(
         })
     }).collect::<Vec<_>>();
 
-    for future in futures.into_iter() {
-        if future.into_inner().is_err() {
+    for thread in threads.into_iter() {
+        if thread.join().is_err() {
             panic!();
         }
     }
