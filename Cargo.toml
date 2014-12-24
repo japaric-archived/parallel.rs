@@ -7,13 +7,7 @@ authors = ["Jorge Aparicio <japaricious@gmail.com>"]
 path = "macros"
 
 [dev-dependencies.quickcheck]
-git = "https://github.com/japaric/quickcheck"
+git = "https://github.com/burntsushi/quickcheck"
 
 [dev-dependencies.quickcheck_macros]
-git = "https://github.com/japaric/quickcheck"
-
-[profile.dev]
-debug = false
-
-[profile.test]
-debug = false
+git = "https://github.com/burntsushi/quickcheck"
