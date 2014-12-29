@@ -1,6 +1,13 @@
 use std::thread::Thread;
 use std::{cmp, iter, mem, raw};
 
+// Proxy struct to send raw pointers across task boundaries
+struct RawPtr<T>(*const T);
+
+impl<T> Copy for RawPtr<T> {}
+
+unsafe impl<T> Send for RawPtr<T> where T: Send {}
+
 /// Parallelizes an `operation` over a mutable slice
 ///
 /// The `data` will be divided in chunks of `granularity` size. A new thread will be spawned to
@@ -40,17 +47,18 @@ pub fn divide<T, F>(data: &mut [T], granularity: uint, operation: F) where
     assert!(granularity > 0);
 
     let raw::Slice { data, len } = unsafe { mem::transmute::<_, raw::Slice<T>>(data) };
-    let op = &operation as *const _ as *const ();
+    let data = RawPtr(data);
+    let op = RawPtr(&operation as *const _ as *const ());
 
     let threads = iter::range_step(0, len, granularity).map(|offset| {
         Thread::spawn(move || {
             // NB Is safe to send the slice/closure because the thread won't outlive this function
             let slice = raw::Slice {
-                data: unsafe { data.offset(offset as int) },
+                data: unsafe { data.0.offset(offset as int) },
                 len: cmp::min(granularity, len - offset)
             };
             let data = unsafe { mem::transmute::<_, &mut [T]>(slice) };
-            let operation = unsafe { mem::transmute::<_, &F>(op) };
+            let operation = unsafe { mem::transmute::<_, &F>(op.0) };
 
             (*operation)(data, offset);
         })
