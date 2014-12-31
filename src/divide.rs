@@ -87,7 +87,7 @@ mod test {
         let mut clone = Vec::from_elem(size, 0f64);
 
         let original_slice = original[];
-        super::divide(clone[mut], granularity, |data, offset| {
+        super::divide(&mut *clone, granularity, |data, offset| {
             for (i, x) in data.iter_mut().enumerate() {
                 *x = original_slice[offset + i]
             }
@@ -104,7 +104,7 @@ mod test {
 
         let mut v = Vec::from_elem(size, None::<f64>);
 
-        super::divide(v[mut], granularity, |data, _| {
+        super::divide(&mut *v, granularity, |data, _| {
             let mut rng: XorShiftRng = rand::task_rng().gen();
 
             for x in data.iter_mut() {
