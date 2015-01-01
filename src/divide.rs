@@ -30,8 +30,8 @@ unsafe impl<T> Send for RawPtr<T> where T: Send {}
 /// use std::num::FloatMath;
 /// use std::rand::{Rng, XorShiftRng, mod};
 ///
-/// let ref mut rng: XorShiftRng = rand::task_rng().gen();
-/// let mut v = Vec::from_fn(1_000, |_| rng.gen::<f32>());
+/// let ref mut rng: XorShiftRng = rand::thread_rng().gen();
+/// let mut v = range(0, 1_000u).map(|_| rng.gen::<f32>()).collect::<Vec<_>>();
 /// # let w = v.iter().map(|x| x.sin()).collect::<Vec<_>>();
 /// parallel::divide(v.as_mut_slice(), 100, |data, _| {
 ///     for x in data.iter_mut() {
@@ -74,6 +74,7 @@ pub fn divide<T, F>(data: &mut [T], granularity: uint, operation: F) where
 #[cfg(test)]
 mod test {
     use quickcheck::TestResult;
+    use std::iter;
     use std::rand::{Rng, XorShiftRng, mod};
 
     #[quickcheck]
@@ -82,11 +83,11 @@ mod test {
             return TestResult::discard();
         }
 
-        let mut rng: XorShiftRng = rand::task_rng().gen();
-        let original = Vec::from_fn(size, |_| rng.gen::<f64>());
-        let mut clone = Vec::from_elem(size, 0f64);
+        let mut rng: XorShiftRng = rand::thread_rng().gen();
+        let original = range(0, size).map(|_| rng.gen::<f64>()).collect::<Vec<_>>();
+        let mut clone = iter::repeat(0f64).take(size).collect::<Vec<_>>();
 
-        let original_slice = original[];
+        let original_slice = &*original;
         super::divide(&mut *clone, granularity, |data, offset| {
             for (i, x) in data.iter_mut().enumerate() {
                 *x = original_slice[offset + i]
@@ -102,10 +103,10 @@ mod test {
             return TestResult::discard();
         }
 
-        let mut v = Vec::from_elem(size, None::<f64>);
+        let mut v = iter::repeat(None::<f64>).take(size).collect::<Vec<_>>();
 
         super::divide(&mut *v, granularity, |data, _| {
-            let mut rng: XorShiftRng = rand::task_rng().gen();
+            let mut rng: XorShiftRng = rand::thread_rng().gen();
 
             for x in data.iter_mut() {
                 *x = Some(rng.gen())
