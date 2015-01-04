@@ -28,7 +28,7 @@ unsafe impl<T> Send for RawPtr<T> where T: Send {}
 ///
 /// ```
 /// use std::num::FloatMath;
-/// use std::rand::{Rng, XorShiftRng, mod};
+/// use std::rand::{Rng, XorShiftRng, self};
 ///
 /// let ref mut rng: XorShiftRng = rand::thread_rng().gen();
 /// let mut v = range(0, 1_000u).map(|_| rng.gen::<f32>()).collect::<Vec<_>>();
@@ -75,7 +75,7 @@ pub fn divide<T, F>(data: &mut [T], granularity: uint, operation: F) where
 mod test {
     use quickcheck::TestResult;
     use std::iter;
-    use std::rand::{Rng, XorShiftRng, mod};
+    use std::rand::{Rng, XorShiftRng, self};
 
     #[quickcheck]
     fn clone(size: uint, granularity: uint) -> TestResult {
