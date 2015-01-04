@@ -9,7 +9,7 @@ use syntax::ast::{CompilerGenerated, TtToken, TokenTree, UnsafeBlock};
 use syntax::codemap::Span;
 use syntax::ext::base::{ExtCtxt, MacExpr, MacResult, NormalTT};
 use syntax::ext::build::AstBuilder;
-use syntax::parse::token::{mod, Comma};
+use syntax::parse::token::{self, Comma};
 
 /// Executes several closures in parallel
 ///
