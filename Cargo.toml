@@ -3,7 +3,11 @@ name = "parallel"
 version = "0.0.0"
 authors = ["Jorge Aparicio <japaricious@gmail.com>"]
 
+[features]
+macros = ["parallel_macros"]
+
 [dependencies.parallel_macros]
+optional = true
 path = "macros"
 
 [dev-dependencies.quickcheck]
