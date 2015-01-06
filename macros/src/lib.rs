@@ -78,10 +78,10 @@ use syntax::parse::token::{self, Comma};
 ///             }
 ///         }
 ///
-///         let (left_sum, right_sum) = execute!{
+///         let (left_sum, right_sum) = execute! {
 ///             // NB Each closure captures a reference and therefore doesn't fulfill `Send`
-///             || sum(&self.left),
-///             || sum(&self.right),
+///             |:| sum(&self.left),
+///             |:| sum(&self.right),
 ///         };
 ///
 ///         left_sum + self.value + right_sum
