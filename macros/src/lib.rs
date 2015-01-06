@@ -47,9 +47,9 @@ use syntax::parse::token::{self, Comma};
 /// };
 /// ```
 ///
-/// # Failure
+/// # Panics
 ///
-/// This macro will fail if any of the spawned threads fails.
+/// This macro will panic if any of the spawned threads panics.
 ///
 /// # Example
 ///
