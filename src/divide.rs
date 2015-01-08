@@ -27,7 +27,7 @@ unsafe impl<T> Send for RawPtr<T> where T: Send {}
 /// Parallel map
 ///
 /// ```
-/// use std::num::FloatMath;
+/// use std::num::Float;
 /// use std::rand::{Rng, XorShiftRng, self};
 ///
 /// let ref mut rng: XorShiftRng = rand::thread_rng().gen();

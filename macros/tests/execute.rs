@@ -1,7 +1,7 @@
-#![feature(phase, unboxed_closures)]
+#![feature(plugin)]
 
 extern crate parallel;
-#[phase(plugin)]
+#[plugin]
 extern crate parallel_macros;
 
 #[test]

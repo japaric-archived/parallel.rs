@@ -1,5 +1,5 @@
 #![deny(warnings)]
-#![feature(macro_rules, plugin_registrar, slicing_syntax)]
+#![feature(plugin_registrar)]
 
 extern crate rustc;
 extern crate syntax;
@@ -57,10 +57,10 @@ use syntax::parse::token::{self, Comma};
 /// [blog](http://smallcultfollowing.com/babysteps/blog/2013/06/11/data-parallelism-in-rust/).
 ///
 /// ```
-/// #![feature(phase, unboxed_closures)]
+/// #![feature(plugin)]
 ///
 /// extern crate parallel;
-/// #[phase(plugin)]
+/// #[plugin]
 /// extern crate parallel_macros;
 ///
 /// struct Tree {

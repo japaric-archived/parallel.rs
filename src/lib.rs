@@ -16,12 +16,12 @@
 //! ```
 
 #![deny(warnings)]
-#![feature(phase, slicing_syntax, unboxed_closures)]
+#![feature(plugin)]
 
 #[cfg(test)]
 extern crate quickcheck;
 #[cfg(test)]
-#[phase(plugin)]
+#[plugin]
 extern crate quickcheck_macros;
 
 use std::mem;
