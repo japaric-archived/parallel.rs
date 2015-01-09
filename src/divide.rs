@@ -27,11 +27,14 @@ unsafe impl<T> Send for RawPtr<T> where T: Send {}
 /// Parallel map
 ///
 /// ```
+/// # #![allow(unstable)]
+/// # extern crate parallel;
 /// use std::num::Float;
 /// use std::rand::{Rng, XorShiftRng, self};
 ///
+/// # fn main() {
 /// let ref mut rng: XorShiftRng = rand::thread_rng().gen();
-/// let mut v = range(0, 1_000u).map(|_| rng.gen::<f32>()).collect::<Vec<_>>();
+/// let mut v = (0..1_000).map(|_| rng.gen::<f32>()).collect::<Vec<_>>();
 /// # let w = v.iter().map(|x| x.sin()).collect::<Vec<_>>();
 /// parallel::divide(v.as_mut_slice(), 100, |data, _| {
 ///     for x in data.iter_mut() {
@@ -39,6 +42,7 @@ unsafe impl<T> Send for RawPtr<T> where T: Send {}
 ///     }
 /// });
 /// # assert_eq!(v, w);
+/// # }
 /// ```
 pub fn divide<T, F>(data: &mut [T], granularity: usize, operation: F) where
     T: Send,
