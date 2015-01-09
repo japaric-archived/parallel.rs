@@ -123,7 +123,9 @@ macro_rules! execute {
 #[plugin_registrar]
 #[doc(hidden)]
 pub fn plugin_registrar(r: &mut Registry) {
-    r.register_syntax_extension(token::intern("execute"), NormalTT(Box::new(expand_execute), None));
+    r.register_syntax_extension(
+        token::intern("execute"),
+        NormalTT(Box::new(expand_execute), None));
 }
 
 fn expand_execute<'cx>(
