@@ -1,3 +1,4 @@
+#![allow(unstable)]
 #![deny(warnings)]
 #![feature(plugin_registrar)]
 
@@ -66,15 +67,15 @@ use syntax::parse::token::{self, Comma};
 /// struct Tree {
 ///     left: Option<Box<Tree>>,
 ///     right: Option<Box<Tree>>,
-///     value: uint,
+///     value: i32,
 /// }
 ///
 /// impl Tree {
-///     fn sum(&self) -> uint {
-///         fn sum(subtree: &Option<Box<Tree>>) -> uint {
+///     fn sum(&self) -> i32 {
+///         fn sum(subtree: &Option<Box<Tree>>) -> i32 {
 ///             match *subtree {
 ///                 None => 0,
-///                 Some(box ref tree) => tree.sum(),
+///                 Some(ref tree) => tree.sum(),
 ///             }
 ///         }
 ///
@@ -91,24 +92,24 @@ use syntax::parse::token::{self, Comma};
 /// fn main() {
 ///     let tree = Tree {
 ///         value: 5,
-///         left: Some(box Tree {
+///         left: Some(Box::new(Tree {
 ///             value: 3,
-///             left: Some(box Tree {
+///             left: Some(Box::new(Tree {
 ///                 value: 1,
 ///                 left: None,
-///                 right: Some(box Tree {
+///                 right: Some(Box::new(Tree {
 ///                     value: 4,
 ///                     left: None,
 ///                     right: None,
-///                 }),
-///             }),
+///                 })),
+///             })),
 ///             right: None,
-///         }),
-///         right: Some(box Tree {
+///         })),
+///         right: Some(Box::new(Tree {
 ///             value: 7,
 ///             left: None,
 ///             right: None,
-///         }),
+///         })),
 ///     };
 ///
 ///     assert_eq!(tree.sum(), 20);
@@ -122,7 +123,7 @@ macro_rules! execute {
 #[plugin_registrar]
 #[doc(hidden)]
 pub fn plugin_registrar(r: &mut Registry) {
-    r.register_syntax_extension(token::intern("execute"), NormalTT(box expand_execute, None));
+    r.register_syntax_extension(token::intern("execute"), NormalTT(Box::new(expand_execute), None));
 }
 
 fn expand_execute<'cx>(

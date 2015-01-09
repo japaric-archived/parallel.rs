@@ -40,9 +40,9 @@ unsafe impl<T> Send for RawPtr<T> where T: Send {}
 /// });
 /// # assert_eq!(v, w);
 /// ```
-pub fn divide<T, F>(data: &mut [T], granularity: uint, operation: F) where
+pub fn divide<T, F>(data: &mut [T], granularity: usize, operation: F) where
     T: Send,
-    F: Fn(&mut [T], uint) + Sync,
+    F: Fn(&mut [T], usize) + Sync,
 {
     assert!(granularity > 0);
 
@@ -51,10 +51,10 @@ pub fn divide<T, F>(data: &mut [T], granularity: uint, operation: F) where
     let op = RawPtr(&operation as *const _ as *const ());
 
     let threads = iter::range_step(0, len, granularity).map(|offset| {
-        Thread::spawn(move || {
+        Thread::scoped(move || {
             // NB Is safe to send the slice/closure because the thread won't outlive this function
             let slice = raw::Slice {
-                data: unsafe { data.0.offset(offset as int) },
+                data: unsafe { data.0.offset(offset as isize) },
                 len: cmp::min(granularity, len - offset)
             };
             let data = unsafe { mem::transmute::<_, &mut [T]>(slice) };
@@ -78,7 +78,7 @@ mod test {
     use std::rand::{Rng, XorShiftRng, self};
 
     #[quickcheck]
-    fn clone(size: uint, granularity: uint) -> TestResult {
+    fn clone(size: usize, granularity: usize) -> TestResult {
         if granularity == 0 {
             return TestResult::discard();
         }
@@ -98,7 +98,7 @@ mod test {
     }
 
     #[quickcheck]
-    fn new(size: uint, granularity: uint) -> TestResult {
+    fn new(size: usize, granularity: usize) -> TestResult {
         if granularity == 0 {
             return TestResult::discard();
         }

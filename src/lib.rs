@@ -15,6 +15,7 @@
 //! git = "https://github.com/japaric/parallel.rs"
 //! ```
 
+#![allow(unstable)]
 #![deny(warnings)]
 #![feature(plugin)]
 
@@ -47,9 +48,9 @@ impl<R, F> FnBox<R> for F where F : FnOnce() -> R {
 ///
 /// **Note** You normally don't want to use this directly because it's unsafe. Instead use the safe
 /// [`execute!`](../parallel_macros/macro.execute!.html) macro.
-pub unsafe fn fork<T, F>(f: F) -> JoinGuard<T> where T: Send, F: FnOnce() -> T {
+pub unsafe fn fork<'a, T, F>(f: F) -> JoinGuard<'a, T> where T: Send, F: FnOnce() -> T + 'a {
     // XXX Is there any way to avoid passing through a trait object?
-    let f = mem::transmute::<_, Box<FnBox<T> + Send>>(box f as Box<FnBox<T>>);
+    let f = mem::transmute::<_, Box<FnBox<T> + Send>>(Box::new(f) as Box<FnBox<T>>);
 
-    Thread::spawn(move || f.call_box())
+    Thread::scoped(move || f.call_box())
 }
