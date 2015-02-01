@@ -88,7 +88,7 @@ mod test {
         }
 
         let mut rng: XorShiftRng = rand::thread_rng().gen();
-        let original = range(0, size).map(|_| rng.gen::<f64>()).collect::<Vec<_>>();
+        let original = (0..size).map(|_| rng.gen::<f64>()).collect::<Vec<_>>();
         let mut clone = iter::repeat(0f64).take(size).collect::<Vec<_>>();
 
         let original_slice = &*original;

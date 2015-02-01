@@ -15,9 +15,12 @@
 //! git = "https://github.com/japaric/parallel.rs"
 //! ```
 
-#![allow(unstable)]
+#![allow(unused_features)]
 #![deny(warnings)]
+#![feature(core)]
 #![feature(plugin)]
+#![feature(rand)]
+#![feature(std_misc)]
 
 #[cfg(test)]
 extern crate quickcheck;
