@@ -19,7 +19,6 @@
 #![deny(warnings)]
 #![feature(core)]
 #![feature(plugin)]
-#![feature(rand)]
 #![feature(std_misc)]
 
 #[cfg(test)]
@@ -27,6 +26,8 @@ extern crate quickcheck;
 #[cfg(test)]
 #[plugin]
 extern crate quickcheck_macros;
+#[cfg(test)]
+extern crate rand;
 
 use std::mem;
 use std::thread::{JoinGuard, Thread};

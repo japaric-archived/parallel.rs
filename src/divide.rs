@@ -27,10 +27,11 @@ unsafe impl<T> Send for RawPtr<T> where T: Send {}
 /// Parallel map
 ///
 /// ```
-/// # #![allow(unstable)]
-/// # extern crate parallel;
+/// extern crate parallel;
+/// extern crate rand;
+///
+/// use rand::{Rng, XorShiftRng};
 /// use std::num::Float;
-/// use std::rand::{Rng, XorShiftRng, self};
 ///
 /// # fn main() {
 /// let ref mut rng: XorShiftRng = rand::thread_rng().gen();
@@ -78,8 +79,8 @@ pub fn divide<T, F>(data: &mut [T], granularity: usize, operation: F) where
 #[cfg(test)]
 mod test {
     use quickcheck::TestResult;
+    use rand::{Rng, XorShiftRng, self};
     use std::iter;
-    use std::rand::{Rng, XorShiftRng, self};
 
     #[quickcheck]
     fn clone(size: usize, granularity: usize) -> TestResult {
