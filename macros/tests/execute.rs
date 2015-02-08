@@ -12,5 +12,5 @@ fn empty() {
 
 #[test]
 fn no_spawn() {
-    execute!(|:| println!("Hello world!"));
+    execute!(|| println!("Hello world!"));
 }
