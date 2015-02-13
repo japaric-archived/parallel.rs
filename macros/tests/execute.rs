@@ -1,9 +1,7 @@
-#![allow(unstable)]
 #![feature(plugin)]
+#![plugin(parallel_macros)]
 
 extern crate parallel;
-#[plugin]
-extern crate parallel_macros;
 
 #[test]
 fn empty() {

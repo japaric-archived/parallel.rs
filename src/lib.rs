@@ -6,7 +6,7 @@
 //!
 //! # Cargo
 //!
-//! ``` notrust
+//! ``` text
 //! # Cargo.toml
 //! [dependencies.parallel]
 //! git = "https://github.com/japaric/parallel.rs"
@@ -20,12 +20,10 @@
 #![feature(core)]
 #![feature(plugin)]
 #![feature(std_misc)]
+#![cfg_attr(test, plugin(quickcheck_macros))]
 
 #[cfg(test)]
 extern crate quickcheck;
-#[cfg(test)]
-#[plugin]
-extern crate quickcheck_macros;
 #[cfg(test)]
 extern crate rand;
 
