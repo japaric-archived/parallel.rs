@@ -58,6 +58,7 @@ use syntax::parse::token::{self, Comma};
 /// ```
 /// #![feature(plugin)]
 /// #![plugin(parallel_macros)]
+/// # extern crate parallel_macros;
 ///
 /// struct Tree {
 ///     left: Option<Box<Tree>>,
