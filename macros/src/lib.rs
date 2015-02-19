@@ -6,7 +6,7 @@ extern crate rustc;
 extern crate syntax;
 
 use rustc::plugin::registry::Registry;
-use syntax::ast::{CompilerGenerated, TtToken, TokenTree, UnsafeBlock};
+use syntax::ast::{TtToken, TokenTree};
 use syntax::codemap::Span;
 use syntax::ext::base::{ExtCtxt, MacExpr, MacResult, NormalTT};
 use syntax::ext::build::AstBuilder;
@@ -17,9 +17,7 @@ use syntax::parse::token::{self, Comma};
 /// - This macro is an expression, and will return a tuple containing the values returned by the
 /// closures.
 /// - One thread per closure (i.e. there is no "load balancing").
-/// - This macro will block until all the spawned threads have finished. For this reason the
-///   closures don't need to fulfill the `Send` trait (i.e. the closures may capture slices and
-///   references).
+/// - This macro will block until all the spawned threads have finished.
 ///
 /// # Expansion
 ///
@@ -33,17 +31,17 @@ use syntax::parse::token::{self, Comma};
 /// };
 /// ```
 ///
-/// This macro uses the unsafe [`fork`](../parallel/fn.fork.html) function defined in the
-/// [`parallel`](../parallel/index.html) crate, and its expansion looks (roughly) like this:
+/// This is convenience macro that uses `thread::scoped()`, and its expansion looks (roughly) like
+/// this:
 ///
 /// ``` ignore
 /// let (a, b, c) = {
 ///     let __thread_0 = || job_0();
-///     let __thread_1 = unsafe { ::parallel::fork(|| job_1()) };  // spawns a thread
-///     let __thread_2 = unsafe { ::parallel::fork(|| job_2()) };  // spawns another thread
+///     let __thread_1 = ::std::thread::scoped(|| job_1());  // spawns a thread
+///     let __thread_2 = ::std::thread::scoped(|| job_2());  // spawns another thread
 ///
 ///     // the current thread takes care of the first closure
-///     (__thread_0(), __thread_1.join().ok().unwrap(), __thread_2.join().ok().unwrap())
+///     (__thread_0(), __thread_1.join(), __thread_2.join())
 ///     // ^~ then blocks until the other two threads finish
 /// };
 /// ```
@@ -60,8 +58,6 @@ use syntax::parse::token::{self, Comma};
 /// ```
 /// #![feature(plugin)]
 /// #![plugin(parallel_macros)]
-///
-/// extern crate parallel;
 ///
 /// struct Tree {
 ///     left: Option<Box<Tree>>,
@@ -132,10 +128,11 @@ fn expand_execute<'cx>(
     sp: Span,
     tts: &[TokenTree],
 ) -> Box<MacResult + 'cx> {
-    let parallel_fork_fn_path = {
+    let std_thread_scoped_fn = {
         let segments = vec![
-            cx.ident_of("parallel"),
-            cx.ident_of("fork"),
+            cx.ident_of("std"),
+            cx.ident_of("thread"),
+            cx.ident_of("scoped"),
         ];
 
         cx.expr_path(cx.path_global(sp, segments))
@@ -149,19 +146,16 @@ fn expand_execute<'cx>(
         !tts.is_empty()
     }).enumerate().map(|(i, tts)|  {
         let closure = cx.new_parser_from_tts(tts).parse_expr();
-        let ident = cx.ident_of(&*format!("__thread_{}", i));
+        let ident = cx.ident_of(&format!("__thread_{}", i));
 
         let expr = if i == 0 {
             closure
         } else {
-            let fn_name = parallel_fork_fn_path.clone();
+            let fn_name = std_thread_scoped_fn.clone();
             let args = vec![closure];
 
             // XXX There has to be a simpler way to wrap an expression in `unsafe`
-            let block = cx.block_expr(cx.expr_call(sp, fn_name, args)).map(|mut b| {
-                b.rules = UnsafeBlock(CompilerGenerated);
-                b
-            });
+            let block = cx.block_expr(cx.expr_call(sp, fn_name, args));
             cx.expr_block(block)
         };
 
@@ -182,12 +176,8 @@ fn expand_execute<'cx>(
         } else {
             let args = vec![];
             let join_method = cx.ident_of("join");
-            let ok_method = cx.ident_of("ok");
-            let unwrap_method = cx.ident_of("unwrap");
 
-            let join_call = cx.expr_method_call(sp, thread, join_method, args.clone());
-            let ok_call = cx.expr_method_call(sp, join_call, ok_method, args.clone());
-            cx.expr_method_call(sp, ok_call, unwrap_method, args)
+            cx.expr_method_call(sp, thread, join_method, args.clone())
         }
     }).collect());
 

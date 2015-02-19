@@ -27,32 +27,6 @@ extern crate quickcheck;
 #[cfg(test)]
 extern crate rand;
 
-use std::mem;
-use std::thread::{JoinGuard, Thread};
-
 pub use divide::divide;
 
 mod divide;
-
-trait FnBox<R> {
-    fn call_box(self: Box<Self>) -> R;
-}
-
-impl<R, F> FnBox<R> for F where F : FnOnce() -> R {
-    fn call_box(self: Box<F>) -> R {
-        (*self)()
-    }
-}
-
-/// Spawns an unsafe thread that may outlive its captured references.
-///
-/// The caller must ensure to call `join()` before the references become invalid.
-///
-/// **Note** You normally don't want to use this directly because it's unsafe. Instead use the safe
-/// [`execute!`](../parallel_macros/macro.execute!.html) macro.
-pub unsafe fn fork<'a, T, F>(f: F) -> JoinGuard<'a, T> where T: Send, F: FnOnce() -> T + 'a {
-    // XXX Is there any way to avoid passing through a trait object?
-    let f = mem::transmute::<_, Box<FnBox<T> + Send>>(Box::new(f) as Box<FnBox<T>>);
-
-    Thread::scoped(move || f.call_box())
-}
