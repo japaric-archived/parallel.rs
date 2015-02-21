@@ -20,6 +20,7 @@
 #![feature(core)]
 #![feature(plugin)]
 #![feature(std_misc)]
+#![feature(os)]
 #![cfg_attr(test, plugin(quickcheck_macros))]
 
 #[cfg(test)]
@@ -28,5 +29,7 @@ extern crate quickcheck;
 extern crate rand;
 
 pub use divide::divide;
+pub use apply::apply;
 
 mod divide;
+mod apply;

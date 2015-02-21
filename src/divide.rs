@@ -1,4 +1,6 @@
+use std;
 use std::thread;
+use std::cmp::max;
 
 /// Parallelizes an `operation` over a mutable slice
 ///
@@ -29,7 +31,7 @@ use std::thread;
 /// let ref mut rng: XorShiftRng = rand::thread_rng().gen();
 /// let mut v = (0..1_000).map(|_| rng.gen::<f32>()).collect::<Vec<_>>();
 /// # let w = v.iter().map(|x| x.sin()).collect::<Vec<_>>();
-/// parallel::divide(v.as_mut_slice(), 100, |data, _| {
+/// parallel::divide(v.as_mut_slice(), Some(100), |data, _| {
 ///     for x in data.iter_mut() {
 ///         *x = x.sin();
 ///     }
@@ -37,16 +39,22 @@ use std::thread;
 /// # assert_eq!(v, w);
 /// # }
 /// ```
-pub fn divide<T, F>(data: &mut [T], granularity: usize, operation: F) where
+pub fn divide<T, F>(data: &mut [T], granularity: Option<usize>, operation: F) where
     T: Send,
     F: Fn(&mut [T], usize) + Sync,
 {
-    assert!(granularity > 0);
+    let true_granularity : usize = match granularity {
+        None => max(data.len()/std::os::num_cpus(), 1),
+        Some(granularity) => (|| {
+            assert!(granularity > 0);
+            granularity
+        })()
+    };
 
     let operation = &operation;
-    let guards: Vec<_> = data.chunks_mut(granularity).zip(0..).map(|(chunk, i)| {
+    let guards: Vec<_> = data.chunks_mut(true_granularity).zip(0..).map(|(chunk, i)| {
         thread::scoped(move || {
-            (*operation)(chunk, i * granularity)
+            (*operation)(chunk, i * true_granularity)
         })
     }).collect();
 
@@ -72,7 +80,7 @@ mod test {
         let mut clone = iter::repeat(0f64).take(size).collect::<Vec<_>>();
 
         let original_slice = &*original;
-        super::divide(&mut *clone, granularity, |data, offset| {
+        super::divide(&mut *clone, Some(granularity), |data, offset| {
             for (i, x) in data.iter_mut().enumerate() {
                 *x = original_slice[offset + i]
             }
@@ -89,7 +97,7 @@ mod test {
 
         let mut v = iter::repeat(None::<f64>).take(size).collect::<Vec<_>>();
 
-        super::divide(&mut *v, granularity, |data, _| {
+        super::divide(&mut *v, Some(granularity), |data, _| {
             let mut rng: XorShiftRng = rand::thread_rng().gen();
 
             for x in data.iter_mut() {
