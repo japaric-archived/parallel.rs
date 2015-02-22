@@ -1,5 +1,4 @@
 use std;
-use divide;
 
 ///Parallelizes `operation` over given `data`. 
 ///
@@ -30,7 +29,7 @@ pub fn apply<T, F>(data: &mut [T], operation: F) where
     F: Fn(&mut T) + Sync,
 {
     let granularity : usize = std::cmp::max(data.len()/std::os::num_cpus() + 1, 1);
-    divide::divide(data, granularity, |data, _|{
+    ::divide(data, granularity, |data, _|{
         for e in data.iter_mut() {
             operation(e);
         }
