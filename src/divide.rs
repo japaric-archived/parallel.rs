@@ -2,8 +2,8 @@ use std::thread;
 
 /// Parallelizes an `operation` over a mutable slice
 ///
-/// The `data` will be divided in chunks of `granularity` size. A new thread will be spawned to
-/// "operate" over each chunk.
+/// The `data` will be divided in chunks of `granularity` size.
+///  A new thread will be spawned to "operate" over each chunk.
 ///
 /// `operation` will receive two arguments:
 ///
