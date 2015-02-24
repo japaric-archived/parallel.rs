@@ -16,12 +16,12 @@
 //! ```
 
 #![allow(unused_features)]
+#![cfg_attr(test, plugin(quickcheck_macros))]
 #![deny(warnings)]
 #![feature(core)]
+#![feature(os)]
 #![feature(plugin)]
 #![feature(std_misc)]
-#![feature(os)]
-#![cfg_attr(test, plugin(quickcheck_macros))]
 
 #[cfg(test)]
 extern crate quickcheck;
