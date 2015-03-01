@@ -1,3 +1,12 @@
+# DEPRECATED
+
+Reason: Now that's safe to send references/slices, this library provides very
+little advantage over directly calling `thread::scoped`.
+
+This library won't receive further fixes nor upgrades.
+
+---
+
 [![Build Status][status]](https://travis-ci.org/japaric/parallel.rs)
 
 # `parallel.rs`
